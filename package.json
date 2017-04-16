@@ -1,9 +1,17 @@
 {
   "name": "somesi",
   "version": "1.0.0",
+  "engines": {
+    "node": "7.5.0",
+    "npm": "4.0.5"
+  },
   "description": "A generic social media site",
   "main": "./server/server.js",
   "scripts": {
+    "debug": "node --inspect ./server/server.js",
+    "nodemon": "nodemon --watch ./server ./server/server.js",
+    "start": "node ./server/server.js",
+    "pretest": "eslint ./server --fix",
     "test": "echo Tests complete!"
   },
   "repository": {
@@ -15,5 +23,28 @@
   "bugs": {
     "url": "https://github.com/TheCodeInside/Somesi/issues"
   },
-  "homepage": "https://github.com/TheCodeInside/Somesi#readme"
+  "homepage": "https://github.com/TheCodeInside/Somesi#readme",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "compression": "^1.6.2",
+    "connect-redis": "^3.2.0",
+    "cookie-parser": "^1.4.3",
+    "csurf": "^1.9.0",
+    "express": "^4.15.2",
+    "express-handlebars": "^3.0.0",
+    "express-session": "^1.15.2",
+    "mongoose": "^4.9.4",
+    "serve-favicon": "^2.4.2",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-env": "^1.4.0",
+    "babel-preset-react": "^6.24.1",
+    "concurrently": "^3.4.0",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb": "^14.1.0",
+    "eslint-plugin-import": "^2.2.0",
+    "nodemon": "^1.11.0"
+  }
 }
