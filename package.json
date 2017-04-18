@@ -10,6 +10,10 @@
   "scripts": {
     "debug": "node --inspect ./server/server.js",
     "nodemon": "nodemon --watch ./server ./server/server.js",
+    "build": "npm run buildSplashBundle",
+    "buildSplashBundle": "babel ./client/splash ./client/shared --presets react --out-file ./hosted/js/splash-bundle.js",
+    "watch": "concurrently \"npm run watchSplashBundle\"",
+    "watchSplashBundle": "babel --watch ./client/splash ./client/shared --presets react --out-file ./hosted/js/splash-bundle.js",
     "start": "node ./server/server.js",
     "pretest": "eslint ./server --fix",
     "test": "echo Tests complete!"

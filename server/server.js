@@ -1,19 +1,20 @@
-const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const compression = require('compression');
+const csrf = require('csurf');
 const express = require('express');
-const handlebars = require('express-handlebars');
-const session = require('express-session');
+const expressHandlebars = require('express-handlebars');
+const expressSession = require('express-session');
 const favicon = require('serve-favicon');
-const path = require('path');
 const mongoose = require('mongoose');
+const path = require('path');
 const redis = require('./redis.js');
 const router = require('./router.js');
-const csrf = require('csurf');
 
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
-const dbUrl = process.env.MONGODB_URI || 'mongodb://localhost/DomoMaker';
-const app = express();
+const dbUrl = process.env.MONGODB_URI || 'mongodb://localhost/Somesi';
+const hostedDir = path.resolve(__dirname, '..', 'hosted');
+const viewsDir = path.resolve(__dirname, 'views');
 
 // Attempt to connect to the database
 mongoose.connect(dbUrl, (err) => {
@@ -24,16 +25,15 @@ mongoose.connect(dbUrl, (err) => {
 });
 
 // Configure our Express app
-const hostedDir = path.resolve(__dirname, '..', 'hosted');
-const viewsDir = path.resolve(__dirname, 'views');
+const app = express();
 app.use(express.static(hostedDir));
-app.use(favicon(path.join(hostedDir, 'favicon.png')));
-app.set('x-powered-by', 'Duct Tap and Glue(t'); // heh
+app.use(favicon(path.join(hostedDir, 'img', 'favicon.png')));
+app.set('x-powered-by', 'Duct Tap and Glue(tm)');
 app.use(compression());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session({
-  key: 'sessionid',
-  store: redis.createStore(session),
+app.use(expressSession({
+  key: 'sid',
+  store: redis.createStore(expressSession),
   secret: 'Yet Another Dang Social Media Site',
   resave: true,
   saveUninitialized: true,
@@ -41,7 +41,7 @@ app.use(session({
     httpOnly: true,
   },
 }));
-app.engine('handlebars', handlebars());
+app.engine('handlebars', expressHandlebars());
 app.set('view engine', 'handlebars');
 app.set('views', viewsDir);
 app.use(cookieParser());
@@ -53,12 +53,14 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
+  console.log(req.body);
+
   console.log('Missing CSRF token from request!');
   return false;
 });
 
 // Link our router to our Express app
-router(app);
+app.use(router);
 
 // Start the Express app
 app.listen(port, (err) => {

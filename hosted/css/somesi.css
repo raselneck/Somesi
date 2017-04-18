@@ -1,0 +1,18 @@
+/* Necessary because of the navbar */
+body {
+  padding-top: 75px;
+}
+
+/* Hides alerts by default */
+#alert-container {
+  display: none;
+  visibility: hidden;
+}
+
+/* Necessary because React messes with Bootstrap rendering for some reason */
+.form-control + .form-control,
+.form-control + input[type="hidden"],
+.form-control + button,
+input[type="hidden"] + button {
+  margin-left: 6px;
+}
