@@ -22,12 +22,31 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Somesi</a>
+          <a class="navbar-brand" href="/">Somesi</a>
         </div>
       </div>
     </nav>
 
+    {{#if error}}
+    <div class="hidden">
+      <div id="initial-error" data-message="{{error}}"></div>
+    </div>
+    {{/if}}
+
+    <div class="container" id="error-container">
+      <div class="alert alert-danger" role="alert">
+        <button type="button" class="close error-close" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <p id="error-message"></p>
+      </div>
+    </div>
+
     <div class="container">
+      <div id="mode" data-mode="{{mode}}"></div>
+
+      <div id="form-container">
+      </div>
     </div>
 
     <div class="container">
@@ -41,6 +60,6 @@
     <script type="text/javascript" src="/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/react.min.js"></script>
     <script type="text/javascript" src="/js/react-dom.min.js"></script>
-    <!-- TODO - Bundle, splash bundle -->
+    <script type="text/javascript" src="/js/account-entry-bundle.js"></script>
   </body>
 </html>

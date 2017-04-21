@@ -10,7 +10,7 @@ const handleSignIn = (e) => {
 
   // Ensure the username and password have been entered
   if (!username || !password) {
-    handleError('Oops! To sign in you need a username AND a password!');
+    displayError('Oops! To sign in you need a username AND a password!');
     return false;
   }
 
@@ -33,11 +33,11 @@ const renderSplashSignInForm = function() {
           id="sign-in-form"
           onSubmit={this.handleSubmit}
           method="POST"
-          action="/sign-in">
+          action="/login">
       <input type="text" id="sign-in-name" name="user" placeholder="Username" className="form-control"/>
       <input type="password" id="sign-in-pass" name="pass" placeholder="Password" className="form-control"/>
       <input type="hidden" name="_csrf" value={this.props.csrf}/>
-      <button type="submit" className="btn btn-success form-control">Sign In</button>
+      <button type="submit" className="btn btn-success form-control">Log In</button>
     </form>
   );
 };

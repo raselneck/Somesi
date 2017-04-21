@@ -12,7 +12,7 @@ var handleSignIn = function handleSignIn(e) {
 
   // Ensure the username and password have been entered
   if (!username || !password) {
-    handleError('Oops! To sign in you need a username AND a password!');
+    displayError('Oops! To sign in you need a username AND a password!');
     return false;
   }
 
@@ -36,14 +36,14 @@ var renderSplashSignInForm = function renderSplashSignInForm() {
       id: 'sign-in-form',
       onSubmit: this.handleSubmit,
       method: 'POST',
-      action: '/sign-in' },
+      action: '/login' },
     React.createElement('input', { type: 'text', id: 'sign-in-name', name: 'user', placeholder: 'Username', className: 'form-control' }),
     React.createElement('input', { type: 'password', id: 'sign-in-pass', name: 'pass', placeholder: 'Password', className: 'form-control' }),
     React.createElement('input', { type: 'hidden', name: '_csrf', value: this.props.csrf }),
     React.createElement(
       'button',
       { type: 'submit', className: 'btn btn-success form-control' },
-      'Sign In'
+      'Log In'
     )
   );
 };
@@ -71,16 +71,32 @@ $(document).ready(function () {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+// Dismisses the current error message
+var dismissError = function dismissError() {
+  var container = $('#error-container');
+  if (container) {
+    container.css({
+      display: 'none',
+      visibility: 'hidden'
+    });
+  }
+};
+
 // Handles an error message
-var handleError = function handleError(message) {
+var displayError = function displayError(msg) {
+  var message = msg || 'Oops! An error occurred.';
   console.log(message);
 
-  var errContainer = $('#alert-container');
-  if (errContainer) {
-    errContainer.css('display', 'block');
-    errContainer.css('visibility', 'visible');
+  // Show the container
+  var container = $('#error-container');
+  if (container) {
+    container.css({
+      display: 'block',
+      visibility: 'visible'
+    });
   }
 
+  // Set the error message
   var err = $('#error-message');
   if (err) {
     err.text(message);
@@ -96,7 +112,7 @@ var Response = function Response(xhr, userdata) {
     this.data = JSON.parse(xhr.responseText);
   } catch (ex) {
     if (xhr.responseText) {
-      handleError(xhr.responseText);
+      displayError(xhr.responseText);
     }
     this.data = null;
   }
@@ -117,14 +133,19 @@ var sendRequest = function sendRequest(method, url, data, callback, userdata) {
     dataType: 'json',
     success: function success(responseData, status, xhr) {
       var response = new Response(xhr);
-      callback(response);
+
+      if (response.data.redirect) {
+        window.location = response.data.redirect;
+      } else {
+        callback(response);
+      }
     },
     error: function error(xhr, status, _error) {
       try {
         var message = JSON.parse(xhr.responseText);
-        handleError(message.error);
+        displayError(message.error);
       } catch (ex) {
-        handleError(xhr.responseText);
+        displayError(xhr.responseText);
       }
     }
   });
@@ -138,8 +159,29 @@ var getCsrfToken = function getCsrfToken(callback) {
   });
 };
 
-// Checks to see if the given username is valid
-var isUsernameValid = function isUsernameValid(name) {
+// Checks to see if a username is valid
+var isValidUsername = function isValidUsername(name) {
   var regex = /^[a-zA-Z0-9_\-]+$/;
-  return regex.matches(name) && name.length >= 4 && name.length <= 16;
+  return regex.test(name) && name.length >= 4 && name.length <= 16;
 };
+
+// Checks to see if an email is valid
+var isValidEmail = function isValidEmail(email) {
+  // Regex from http://stackoverflow.com/a/46181
+  var regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return regex.test(email);
+};
+
+// Shared functionality for when the page loads
+$(document).ready(function () {
+  // See if there's an initial error message
+  var initialError = $('#initial-error').attr('data-message');
+  if (initialError) {
+    displayError(initialError);
+  }
+
+  // Handle the error alert button being clicked
+  $('button.error-close').click(function () {
+    dismissError();
+  });
+});

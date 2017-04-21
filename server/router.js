@@ -2,6 +2,7 @@ const ExpressRouter = require('express').Router;
 const controllers = require('./controllers');
 
 const account = controllers.account;
+const dashboard = controllers.dashboard;
 const splash = controllers.splash;
 const router = ExpressRouter();
 
@@ -9,10 +10,13 @@ const router = ExpressRouter();
 
 router.all('/', splash.renderSplashPage);
 
-router.get('/create-account', account.renderCreateAccountPage);
+router.get('/signup', account.renderSignUpPage);
+router.get('/login', account.renderLogInPage);
 router.get('/get-csrf-token', account.getToken);
 
-router.post('/sign-in', account.signIn);
-router.post('/sign-up', account.signUp);
+router.get('/dashboard', dashboard.renderDashboard);
+
+router.post('/login', account.logIn);
+router.post('/signup', account.signUp);
 
 module.exports = router;
