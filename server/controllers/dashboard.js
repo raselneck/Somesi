@@ -1,5 +1,6 @@
 const renderDashboard = (req, res) => {
-  res.render('dashboard');
+  const account = req.session.account;
+  res.render('dashboard', { username: account.username });
 };
 
 module.exports = {
