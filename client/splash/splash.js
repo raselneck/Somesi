@@ -17,13 +17,11 @@ const handleSignIn = (e) => {
   // Attempt to sign in
   const form = $('#sign-in-form');
   sendRequest('POST', form.attr('action'), form.serialize(), (response) => {
+    // If we're here, then we got a response that wasn't a redirect
+    displayError('Uh-oh... This shouldn\'t have happened...');
     console.log(response);
   });
 };
-
-/**
-  regex.test(...) && (...).length >= 4 && (...).length <= 16
-*/
 
 // Renders the sign in form for the splash page
 const renderSplashSignInForm = function() {
@@ -34,9 +32,9 @@ const renderSplashSignInForm = function() {
           onSubmit={this.handleSubmit}
           method="POST"
           action="/login">
+      <input type="hidden" name="_csrf" value={this.props.csrf}/>
       <input type="text" id="sign-in-name" name="user" placeholder="Username" className="form-control"/>
       <input type="password" id="sign-in-pass" name="pass" placeholder="Password" className="form-control"/>
-      <input type="hidden" name="_csrf" value={this.props.csrf}/>
       <button type="submit" className="btn btn-success form-control">Log In</button>
     </form>
   );

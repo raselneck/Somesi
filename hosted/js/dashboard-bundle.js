@@ -1,69 +1,10 @@
 'use strict';
 
-// Handles signing in
-var handleSignIn = function handleSignIn(e) {
-  e.preventDefault();
-
-  var usernameElem = $('#sign-in-name');
-  var passwordElem = $('#sign-in-pass');
-
-  var username = usernameElem.val();
-  var password = passwordElem.val();
-
-  // Ensure the username and password have been entered
-  if (!username || !password) {
-    displayError('Oops! To sign in you need a username AND a password!');
-    return false;
-  }
-
-  // Attempt to sign in
-  var form = $('#sign-in-form');
-  sendRequest('POST', form.attr('action'), form.serialize(), function (response) {
-    // If we're here, then we got a response that wasn't a redirect
-    displayError('Uh-oh... This shouldn\'t have happened...');
-    console.log(response);
-  });
-};
-
-// Renders the sign in form for the splash page
-var renderSplashSignInForm = function renderSplashSignInForm() {
-  return React.createElement(
-    'form',
-    { className: 'navbar-form navbar-right',
-      name: 'sign-in-form',
-      id: 'sign-in-form',
-      onSubmit: this.handleSubmit,
-      method: 'POST',
-      action: '/login' },
-    React.createElement('input', { type: 'hidden', name: '_csrf', value: this.props.csrf }),
-    React.createElement('input', { type: 'text', id: 'sign-in-name', name: 'user', placeholder: 'Username', className: 'form-control' }),
-    React.createElement('input', { type: 'password', id: 'sign-in-pass', name: 'pass', placeholder: 'Password', className: 'form-control' }),
-    React.createElement(
-      'button',
-      { type: 'submit', className: 'btn btn-success form-control' },
-      'Log In'
-    )
-  );
-};
-
-// Initializes the splash page
-var initialize = function initialize(csrf) {
-  // Create the sign in form
-  var SignInForm = React.createClass({
-    displayName: 'SignInForm',
-
-    handleSubmit: handleSignIn,
-    render: renderSplashSignInForm
-  });
-
-  // Render the sign in form
-  var target = document.querySelector('#navbar');
-  ReactDOM.render(React.createElement(SignInForm, { csrf: csrf }), target);
-};
-
-// Handle when the page is done loading
 $(document).ready(function () {
-  getCsrfToken(initialize);
+  // Handle the log out button being clicked
+  $('#logout').click(function () {
+    window.location = '/logout';
+  });
 });
 'use strict';
 

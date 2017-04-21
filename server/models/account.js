@@ -7,6 +7,7 @@ let AccountModel = {};
 const cryptIterations = 100000;
 const cryptSaltLength = 128;
 const cryptKeyLength = 128;
+const cryptAlgorithm = 'RSA-SHA512';
 
 // Define the account schema
 const AccountSchema = new mongoose.Schema({
@@ -46,7 +47,7 @@ const AccountSchema = new mongoose.Schema({
 // Helper method for converting an account to its session equivalent
 AccountSchema.statics.toSession = doc => ({
   username: doc.username,
-  email: doc.email,
+  /*email: doc.email,*/
   _id: doc._id,
 });
 
@@ -54,7 +55,7 @@ AccountSchema.statics.toSession = doc => ({
 const validatePassword = (doc, password, callback) => {
   const pass = doc.password;
 
-  return crypto.pbkdf2(password, doc.salt, cryptIterations, cryptKeyLength, 'RSA-SHA512', (err, hash) => {
+  return crypto.pbkdf2(password, doc.salt, cryptIterations, cryptKeyLength, cryptAlgorithm, (err, hash) => {
     const hashString = hash.toString('hex');
     if (hashString !== pass) {
       return callback(false);
@@ -79,7 +80,7 @@ AccountSchema.statics.findByEmail = (email, callback) => {
 AccountSchema.statics.generateHash = (password, callback) => {
   const salt = crypto.randomBytes(cryptSaltLength);
 
-  crypto.pbkdf2(password, salt, cryptIterations, cryptKeyLength, 'RSA-SHA512', (err, hash) => {
+  crypto.pbkdf2(password, salt, cryptIterations, cryptKeyLength, cryptAlgorithm, (err, hash) => {
     callback(salt, hash.toString('hex'));
   });
 };

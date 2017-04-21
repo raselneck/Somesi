@@ -43,6 +43,17 @@ const logIn = (req_, res) => {
   });
 };
 
+// Attempts to log the current user out
+const logOut = (req_, res) => {
+  const req = req_;
+
+  if (req.session.account) {
+    delete req.session.account;
+  }
+
+  res.redirect('/');
+};
+
 // Attempts to create a user account
 const signUp = (req_, res) => {
   const req = req_;
@@ -85,10 +96,18 @@ const signUp = (req_, res) => {
     }).catch((err) => {
       console.log('Error saving account:', err);
 
+      let errorMessage = 'An error occurred.';
       if (err.code === 11000) {
-        return res.status(400).json({ error: 'Username or email already in use.' });
+        const message = err.errmsg;
+        
+        if (message.indexOf('username') >= 0) {
+          errorMessage = 'Username is already in use.';
+        } else if (message.indexOf('email') >= 0) {
+          errorMessage = 'Email address is already in use.';
+        }
       }
-      return res.status(400).json({ error: 'An error occurred.' });
+
+      return res.status(400).json({ error: errorMessage });
     });
   });
 };
@@ -104,6 +123,7 @@ module.exports = {
   renderSignUpPage,
   renderSettingsPage,
   logIn,
+  logOut,
   signUp,
   getToken,
 };
