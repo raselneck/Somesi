@@ -79,9 +79,9 @@ AccountSchema.statics.findByEmail = (email, callback) => {
 AccountSchema.statics.generateHash = (password, callback) => {
   const salt = crypto.randomBytes(cryptSaltLength);
 
-  crypto.pbkdf2(password, salt, cryptIterations, cryptKeyLength, 'RSA-SHA512', (err, hash) =>
-    callback(salt, hash.toString('hex')),
-  );
+  crypto.pbkdf2(password, salt, cryptIterations, cryptKeyLength, 'RSA-SHA512', (err, hash) => {
+    callback(salt, hash.toString('hex'));
+  });
 };
 
 // Attempts to authenticate a user with the given username and password
