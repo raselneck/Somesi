@@ -67,8 +67,8 @@ AccountSchema.statics.toSession = doc => ({
 });
 
 // Finds a user by their username
-AccountSchema.statics.findByUsername = (name, callback) => {
-  const search = { username: name };
+AccountSchema.statics.findByUsername = (username, callback) => {
+  const search = { username };
   return AccountModel.findOne(search, callback);
 };
 
@@ -113,7 +113,16 @@ AccountSchema.statics.authenticate = (username, password, callback) =>
    });
 
 // Gets all of the posts made by the user with the given username
-AccountSchema.statics.getPosts = (username, callback) => Post.getAllByUserName(username, callback);
+AccountSchema.statics.getPosts = (username, callback) =>
+  AccountModel.findOne({ username }, (err, account) => {
+    if (err) {
+      return callback(err);
+    }
+    if (!account) {
+      return callback(new Error(`A user with the name ${username} does not exist!`));
+    }
+    return Post.getAllByUserName(username, callback);
+  });
 
 // Create the account model
 AccountModel = mongoose.model('Account', AccountSchema);

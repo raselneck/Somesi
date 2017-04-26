@@ -33,3 +33,8 @@ input[type="hidden"] + button {
   display: none;
   visibility: hidden;
 }
+
+.col-center {
+  margin-left: auto;
+  margin-right: auto;
+}

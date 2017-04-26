@@ -16,6 +16,8 @@ router.get('/signup', mid.requiresNoAccount, account.renderSignUpPage);
 router.get('/login', mid.requiresNoAccount, account.renderLogInPage);
 router.get('/get-csrf-token', account.getToken);
 
+router.use('/profile', account.renderProfilePage);
+
 router.get('/dashboard', mid.requiresAccount, dashboard.renderDashboard);
 
 router.post('/login', account.logIn);

@@ -12,8 +12,9 @@ const processPostText = text => _.escape(text).trim();
 // Define the post schema
 const PostSchema = new mongoose.Schema({
   owner: {
-    type: ObjectId,
+    type: mongoose.Schema.ObjectId,
     required: true,
+    ref: 'Account',
   },
 
   ownerName: {
@@ -44,7 +45,7 @@ PostSchema.statics.toClient = doc => ({
 
 // Gets all of the posts by the given user ID
 PostSchema.statics.getAllByUserId = (id, callback) => {
-  const search = { owner: id };
+  const search = { owner: ObjectId(id) };
   return PostModel.find(search).exec(callback);
 };
 

@@ -1,15 +1,51 @@
 const models = require('../models');
+const shared = require('./shared.js');
 
 const Account = models.Account;
 
 // Renders the log in page
 const renderLogInPage = (req, res) => {
-  res.render('account-entry', { mode: 'log-in', error: req.renderError });
+  shared.renderPage(req, res, 'account-entry', {
+    mode: 'log-in',
+    error: req.renderError,
+  });
 };
 
 // Renders the sign up page
 const renderSignUpPage = (req, res) => {
-  res.render('account-entry', { mode: 'sign-up', error: req.renderError });
+  shared.renderPage(req, res, 'account-entry', {
+    mode: 'sign-up',
+    error: req.renderError,
+  });
+};
+
+// Renders a user's profile page
+const renderProfilePage = (req, res) => {
+  const pathParts = req.path.split('/');
+  pathParts.splice(0, 1);
+
+  if (pathParts.length === 0 || pathParts[0] === '') {
+    // "/profile" just redirects to "/"
+    return res.redirect('/');
+  } else if (pathParts.length > 1) {
+    // "/profile/{name}/..." redirects to "/profile/{name}"
+    return res.redirect(`/profile/${pathParts[0]}`);
+  }
+    // Okay, now we can try to render the profile page
+  const username = pathParts[0];
+  return Account.getPosts(username, (err, posts) => {
+    const options = {};
+
+    if (err) {
+      options.exists = false;
+    } else {
+      options.exists = true;
+      options.hasPosts = posts.length > 0;
+      options.posts = posts;
+    }
+
+    shared.renderPage(req, res, 'profile', options);
+  });
 };
 
 // Renders the settings page
@@ -135,6 +171,7 @@ const getToken = (req, res) => {
 module.exports = {
   renderLogInPage,
   renderSignUpPage,
+  renderProfilePage,
   renderSettingsPage,
   logIn,
   logOut,

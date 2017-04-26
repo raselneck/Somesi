@@ -1,3 +1,5 @@
+const shared = require('./shared.js');
+
 // Attempts to get the posts for a user's dashboard
 const getPosts = (account, offset, count, callback) => {
   callback(undefined, undefined);
@@ -10,8 +12,7 @@ const renderDashboard = (req, res) => {
   const count = 10;
 
   return getPosts(account, offset, count, (err, posts) => {
-    const username = account.username;
-    res.render('dashboard', { username, posts });
+    shared.renderPage(req, res, 'dashboard', { posts });
   });
 };
 
