@@ -1,13 +1,14 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
-
-mongoose.Promise = global.Promise;
+const Post = require('./post.js');
 
 let AccountModel = {};
 const cryptIterations = 100000;
 const cryptSaltLength = 128;
 const cryptKeyLength = 128;
 const cryptAlgorithm = 'RSA-SHA512';
+
+mongoose.Promise = global.Promise;
 
 // Define the account schema
 const AccountSchema = new mongoose.Schema({
@@ -44,25 +45,26 @@ const AccountSchema = new mongoose.Schema({
   },
 });
 
-// Helper method for converting an account to its session equivalent
-AccountSchema.statics.toSession = doc => ({
-  username: doc.username,
-  /*email: doc.email,*/
-  _id: doc._id,
-});
-
 // Checks to see if a user's password matches the given password
 const validatePassword = (doc, password, callback) => {
   const pass = doc.password;
 
-  return crypto.pbkdf2(password, doc.salt, cryptIterations, cryptKeyLength, cryptAlgorithm, (err, hash) => {
-    const hashString = hash.toString('hex');
-    if (hashString !== pass) {
-      return callback(false);
-    }
-    return callback(true);
-  });
+  return crypto.pbkdf2(password, doc.salt, cryptIterations, cryptKeyLength, cryptAlgorithm,
+    (err, hash) => {
+      const hashString = hash.toString('hex');
+      if (hashString !== pass) {
+        return callback(false);
+      }
+      return callback(true);
+    });
 };
+
+// Helper method for converting an account to its session equivalent
+AccountSchema.statics.toSession = doc => ({
+  username: doc.username,
+  /* email: doc.email,*/
+  _id: doc._id,
+});
 
 // Finds a user by their username
 AccountSchema.statics.findByUsername = (name, callback) => {
@@ -80,9 +82,10 @@ AccountSchema.statics.findByEmail = (email, callback) => {
 AccountSchema.statics.generateHash = (password, callback) => {
   const salt = crypto.randomBytes(cryptSaltLength);
 
-  crypto.pbkdf2(password, salt, cryptIterations, cryptKeyLength, cryptAlgorithm, (err, hash) => {
-    callback(salt, hash.toString('hex'));
-  });
+  crypto.pbkdf2(password, salt, cryptIterations, cryptKeyLength, cryptAlgorithm,
+    (err, hash) => {
+      callback(salt, hash.toString('hex'));
+    });
 };
 
 // Attempts to authenticate a user with the given username and password
@@ -109,10 +112,9 @@ AccountSchema.statics.authenticate = (username, password, callback) =>
      });
    });
 
+// Gets all of the posts made by the user with the given username
+AccountSchema.statics.getPosts = (username, callback) => Post.getAllByUserName(username, callback);
+
 // Create the account model
 AccountModel = mongoose.model('Account', AccountSchema);
-
-module.exports = {
-  AccountModel,
-  AccountSchema,
-};
+module.exports = AccountModel;

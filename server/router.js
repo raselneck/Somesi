@@ -20,5 +20,9 @@ router.get('/dashboard', mid.requiresAccount, dashboard.renderDashboard);
 
 router.post('/login', account.logIn);
 router.post('/signup', account.signUp);
+router.post('/post', mid.requiresAccountPost, account.post);
+router.post('/follow', mid.requiresAccountPost, account.follow);
+router.post('/unfollow', mid.requiresAccountPost, account.unfollow);
+router.post('/get-posts', mid.requiresAccountPost, dashboard.getPosts);
 
 module.exports = router;

@@ -1,5 +1,7 @@
-const account = require('./account.js');
+const Account = require('./account.js');
+const Post = require('./post.js');
 
 module.exports = {
-  account,
+  Account,
+  Post,
 };

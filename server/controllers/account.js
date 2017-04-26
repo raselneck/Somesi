@@ -1,7 +1,6 @@
 const models = require('../models');
 
-// const AccountSchema = models.account.AccountSchema;
-const AccountModel = models.account.AccountModel;
+const Account = models.Account;
 
 // Renders the log in page
 const renderLogInPage = (req, res) => {
@@ -31,13 +30,13 @@ const logIn = (req_, res) => {
   }
 
   // Attempt to log in
-  return AccountModel.authenticate(username, password, (err, account) => {
+  return Account.authenticate(username, password, (err, account) => {
     if (err || !account) {
       return res.status(401).json({ error: 'Invalid username / password combination.' });
     }
 
     // Set the account info for the session
-    req.session.account = AccountModel.toSession(account);
+    req.session.account = Account.toSession(account);
 
     return res.json({ redirect: '/dashboard' });
   });
@@ -74,7 +73,7 @@ const signUp = (req_, res) => {
   }
 
   // Generate the password hash
-  return AccountModel.generateHash(pass, (salt, hash) => {
+  return Account.generateHash(pass, (salt, hash) => {
     // Create the account data
     const accountData = {
       username,
@@ -84,14 +83,14 @@ const signUp = (req_, res) => {
     };
 
     // Now create the account
-    const account = new AccountModel(accountData);
+    const account = new Account(accountData);
 
     // Save the account
     const promise = account.save();
 
     promise.then(() => {
       // Save the user account in the session
-      req.session.account = AccountModel.toSession(account);
+      req.session.account = Account.toSession(account);
       res.json({ redirect: '/dashboard' });
     }).catch((err) => {
       console.log('Error saving account:', err);
@@ -99,7 +98,7 @@ const signUp = (req_, res) => {
       let errorMessage = 'An error occurred.';
       if (err.code === 11000) {
         const message = err.errmsg;
-        
+
         if (message.indexOf('username') >= 0) {
           errorMessage = 'Username is already in use.';
         } else if (message.indexOf('email') >= 0) {
@@ -110,6 +109,21 @@ const signUp = (req_, res) => {
       return res.status(400).json({ error: errorMessage });
     });
   });
+};
+
+// Attempts to make a post for a user
+const post = (req, res) => {
+  res.status(501).json({});
+};
+
+// Attempts to follow a user
+const follow = (req, res) => {
+  res.status(501).json({});
+};
+
+// Attempts to un-follow a user
+const unfollow = (req, res) => {
+  res.status(501).json({});
 };
 
 // Gets a CSRF token
@@ -125,5 +139,8 @@ module.exports = {
   logIn,
   logOut,
   signUp,
+  post,
+  follow,
+  unfollow,
   getToken,
 };
