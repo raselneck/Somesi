@@ -13,7 +13,7 @@ body {
 #form-container {
   border: 3px solid #ddd;
   padding: 10px;
-  box-shadow: 
+  box-shadow:
 }
 
 /* Also used on the login and sign up pages */
@@ -27,6 +27,17 @@ body {
 .form-control + button,
 input[type="hidden"] + button {
   margin-left: 6px;
+}
+
+/* Fricken Bootstrap using -1 in weird ass places */
+@media (max-width: 767px) {
+  .form-control + .form-control,
+  .form-control + input[type="hidden"],
+  .form-control + button,
+  input[type="hidden"] + button {
+    margin-left: 0px;
+    margin-top: 6px;
+  }
 }
 
 .hidden {

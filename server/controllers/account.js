@@ -74,7 +74,8 @@ const logIn = (req_, res) => {
     // Set the account info for the session
     req.session.account = Account.toSession(account);
 
-    return res.json({ redirect: '/dashboard' });
+    const redirect = req.headers.referer || '/dashboard';
+    return res.json({ redirect });
   });
 };
 
@@ -86,7 +87,8 @@ const logOut = (req_, res) => {
     delete req.session.account;
   }
 
-  res.redirect('/');
+  const redirect = req.headers.referer || '/dashboard';
+  res.redirect(redirect);
 };
 
 // Attempts to create a user account

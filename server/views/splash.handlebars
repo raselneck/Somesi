@@ -25,15 +25,20 @@
           <a class="navbar-brand" href="/">Somesi</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
+          <div id="navbar-data" class="navbar-right">
+          </div>
         </div>
       </div>
     </nav>
 
-    {{#if error}}
     <div class="hidden">
+      {{#if error}}
       <div id="initial-error" data-message="{{error}}"></div>
+      {{/if}}
+      {{#if account}}
+      <div id="account-info" data-id="{{account.id}}" data-username="{{account.username}}"></div>
+      {{/if}}
     </div>
-    {{/if}}
 
     <div class="container" id="error-container">
       <div class="alert alert-danger" role="alert">
@@ -48,8 +53,7 @@
       <div class="container">
         <h1>Welcome!</h1>
         <p>Somesi is <i>yet another</i> <b>so</b>cial <b>me</b>dia <b>si</b>te.
-        Currently every post you make is seen by everyone, but by the end
-        of the project you'll only see posts by your friends!</p>
+        It's basically knock-off <a href="https://twitter.com/" target="_blank">Twitter</a>&reg;.</p>
         <p><a class="btn btn-primary btn-lg" href="/signup" role="button">Sign up &raquo;</a></p>
       </div>
     </div>

@@ -4,8 +4,10 @@ const renderPage = (req, res, page, options) => {
   const account = req.session.account;
 
   if (account) {
-    opt.username = account.username;
-    opt.userId = account._id;
+    opt.account = {
+      username: account.username,
+      id: account._id,
+    };
   }
 
   res.render(page, opt);

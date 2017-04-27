@@ -328,6 +328,139 @@ var isValidEmail = function isValidEmail(email) {
   return regex.test(email);
 };
 
+// Handles signing in
+var handleSignIn = function handleSignIn(e) {
+  e.preventDefault();
+
+  var usernameElem = $('#sign-in-name');
+  var passwordElem = $('#sign-in-pass');
+
+  var username = usernameElem.val();
+  var password = passwordElem.val();
+
+  // Ensure the username and password have been entered
+  if (!username || !password) {
+    displayError('Oops! To sign in you need a username AND a password!');
+    return false;
+  }
+
+  // Attempt to sign in
+  var form = $('#sign-in-form');
+  sendRequest('POST', form.attr('action'), form.serialize(), function (response) {
+    // If we're here, then we got a response that wasn't a redirect
+    displayError('Uh-oh... This shouldn\'t have happened...');
+    console.log(response);
+  });
+};
+
+// Renders the sign in form for the navbar
+var renderNavbarSignInForm = function renderNavbarSignInForm() {
+  return React.createElement(
+    'form',
+    { className: 'navbar-form',
+      name: 'sign-in-form',
+      id: 'sign-in-form',
+      onSubmit: this.handleSubmit,
+      method: 'POST',
+      action: '/login' },
+    React.createElement('input', { type: 'hidden', name: '_csrf', value: this.props.csrf }),
+    React.createElement('input', { type: 'text', id: 'sign-in-name', name: 'user', placeholder: 'Username', className: 'form-control' }),
+    React.createElement('input', { type: 'password', id: 'sign-in-pass', name: 'pass', placeholder: 'Password', className: 'form-control' }),
+    React.createElement(
+      'button',
+      { type: 'submit', className: 'btn btn-success form-control' },
+      'Log In'
+    )
+  );
+};
+
+// Renders the navbar account info
+var renderNavbarAccountInfo = function renderNavbarAccountInfo() {
+  return React.createElement(
+    'ul',
+    { className: 'nav navbar-nav' },
+    React.createElement(
+      'li',
+      { className: 'dropdown' },
+      React.createElement(
+        'a',
+        { href: '#',
+          className: 'dropdown-toggle',
+          'data-toggle': 'dropdown',
+          role: 'button',
+          'aria-haspopup': 'true',
+          'aria-expanded': 'false' },
+        'Hello, ',
+        this.state.username,
+        ' ',
+        React.createElement('span', { className: 'caret' })
+      ),
+      React.createElement(
+        'ul',
+        { className: 'dropdown-menu' },
+        React.createElement(
+          'li',
+          null,
+          React.createElement(
+            'a',
+            { href: '/logout' },
+            'Log Out'
+          )
+        )
+      )
+    )
+  );
+};
+
+// Sets up the navbar sign-in form
+var initNavbar = function initNavbar(token) {
+  var target = document.querySelector('#navbar-data');
+  var csrf = token;
+
+  // Initializes the navbar sign-in form
+  var initNavbarSignIn = function initNavbarSignIn() {
+    // Create the sign in form
+    var NavbarSignIn = React.createClass({
+      displayName: 'NavbarSignIn',
+
+      handleSubmit: handleSignIn,
+      render: renderNavbarSignInForm
+    });
+
+    // Render the sign in form
+    ReactDOM.render(React.createElement(NavbarSignIn, { csrf: csrf }), target);
+  };
+
+  // Initializes the navbar account menu
+  var initNavbarAccount = function initNavbarAccount(username, id) {
+    var NavbarAccount = React.createClass({
+      displayName: 'NavbarAccount',
+
+      render: renderNavbarAccountInfo,
+
+      // Gets the initial state
+      getInitialState: function getInitialState() {
+        return { username: username, id: id };
+      }
+    });
+
+    // Render the user account info
+    ReactDOM.render(React.createElement(NavbarAccount, null), target);
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  var accountInfo = $('#account-info');
+  var username = accountInfo.attr('data-username');
+  var id = accountInfo.attr('data-id');
+
+  if (username && id) {
+    initNavbarAccount(username, id);
+  } else {
+    initNavbarSignIn();
+  }
+};
+
 // Shared functionality for when the page loads
 $(document).ready(function () {
   // See if there's an initial error message
@@ -340,4 +473,6 @@ $(document).ready(function () {
   $('button.error-close').click(function () {
     dismissError();
   });
+
+  getCsrfToken(initNavbar);
 });

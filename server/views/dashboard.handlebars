@@ -25,25 +25,20 @@
           <a class="navbar-brand" href="/">Somesi</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-          <div class="navbar-right">
-            <ul class="nav navbar-nav">
-              <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Hello, {{username}} <span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  <li><a href="/logout">Log Out</a></li>
-                </ul>
-              </li>
-            </ul>
+          <div id="navbar-data" class="navbar-right">
           </div>
         </div>
       </div>
     </nav>
 
-    {{#if error}}
     <div class="hidden">
+      {{#if error}}
       <div id="initial-error" data-message="{{error}}"></div>
+      {{/if}}
+      {{#if account}}
+      <div id="account-info" data-id="{{account.id}}" data-username="{{account.username}}"></div>
+      {{/if}}
     </div>
-    {{/if}}
 
     <div class="container" id="error-container">
       <div class="alert alert-danger" role="alert">

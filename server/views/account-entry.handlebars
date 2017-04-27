@@ -27,11 +27,14 @@
       </div>
     </nav>
 
-    {{#if error}}
     <div class="hidden">
+      {{#if error}}
       <div id="initial-error" data-message="{{error}}"></div>
+      {{/if}}
+      {{#if account}}
+      <div id="account-info" data-id="{{account.id}}" data-username="{{account.username}}"></div>
+      {{/if}}
     </div>
-    {{/if}}
 
     <div class="container" id="error-container">
       <div class="alert alert-danger" role="alert">
