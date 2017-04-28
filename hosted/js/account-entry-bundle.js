@@ -319,10 +319,30 @@ var renderNavbarAccountInfo = function renderNavbarAccountInfo() {
   );
 };
 
+// Renders the navbar follow form
+var renderNavbarFollowForm = function renderNavbarFollowForm() {
+  var baseText = this.state.follows ? "Unfollow" : "Follow";
+  var text = baseText + ' ' + user;
+  return React.createElement(
+    'form',
+    { className: 'navbar-form',
+      name: 'follow-form',
+      id: 'follow-form',
+      onSubmit: this.handleSubmit,
+      method: 'POST',
+      action: '/follow' },
+    React.createElement(
+      'button',
+      { type: 'submit', className: 'btn btn-primary form-control' },
+      text
+    )
+  );
+};
+
 // Sets up the navbar sign-in form
 var initNavbar = function initNavbar(token) {
-  var target = document.querySelector('#navbar-data');
   var csrf = token;
+  var target = document.querySelector('#navbar-data');
 
   // If the target doesn't exist, then just stop what we're doing
   if (!target) {
@@ -365,6 +385,72 @@ var initNavbar = function initNavbar(token) {
     ReactDOM.render(React.createElement(NavbarAccount, null), target);
   };
 
+  // Initializes the navbar follow form
+  var initNavbarFollowForm = function initNavbarFollowForm(username) {
+    // If we're not on a profile page, then we don't need to do anything
+    if (typeof user === 'undefined' && typeof userExists === 'undefined') {
+      return;
+    }
+
+    // If the user is viewing their own profile, then we don't need to do anything
+    if (user === username) {
+      return;
+    }
+
+    // And now we enter callback hell...
+
+    getCsrfToken(function (token) {
+      var data = {
+        follower: username,
+        followee: user,
+        _csrf: token
+      };
+
+      // Check to see if the signed in user follows the viewing user
+      sendRequest('POST', '/follows', data, function (response) {
+        var follows = response.data.follows;
+
+        // Define the follow form
+        var NavbarFollowForm = React.createClass({
+          displayName: 'NavbarFollowForm',
+
+          // Renders the follow form
+          render: renderNavbarFollowForm,
+
+          // Gets the follow form's initial state
+          getInitialState: function getInitialState() {
+            return { follows: follows };
+          },
+
+          // Handles the follow form being submitted
+          handleSubmit: function handleSubmit(e) {
+            var _this = this;
+
+            e.preventDefault();
+
+            var action = this.state.follows ? '/unfollow' : '/follow';
+
+            // Send the follow or unfollow request
+            getCsrfToken(function (token2) {
+              var data2 = {
+                username: user,
+                _csrf: token2
+              };
+
+              sendRequest('POST', action, data2, function (response) {
+                follows = !follows;
+                _this.setState({ follows: follows });
+              });
+            });
+          }
+        });
+
+        // Render the follow form
+        ReactDOM.render(React.createElement(NavbarFollowForm, null), document.querySelector('#navbar-follow'));
+      });
+    });
+  };
+
   /////////////////////////////////////////////////////////////////////////////
 
   var accountInfo = $('#account-info');
@@ -373,6 +459,7 @@ var initNavbar = function initNavbar(token) {
 
   if (username && id) {
     initNavbarAccount(username, id);
+    initNavbarFollowForm(username);
   } else {
     initNavbarSignIn();
   }
@@ -383,14 +470,39 @@ var initNavbar = function initNavbar(token) {
 var renderPostList = function renderPostList() {
   // Define the post list
   var postList = this.state.posts.map(function (post) {
-    console.log(post);
+    // Gets the current post's date string
+    var getDateString = function getDateString() {
+      var date = new Date(post.date);
+      var ds = date.toLocaleDateString();
+      var ts = date.toLocaleTimeString();
+      return "on " + ds + " at " + ts;
+    };
+
+    // Gets the link to the author's profile
+    var getAuthorHref = function getAuthorHref() {
+      return "/profile/" + post.ownerName;
+    };
+
     return React.createElement(
       "div",
       { className: "post" },
       React.createElement(
-        "p",
+        "h4",
         null,
-        "That sure is a post!"
+        post.text
+      ),
+      React.createElement(
+        "p",
+        { className: "info" },
+        "by ",
+        React.createElement(
+          "a",
+          { href: getAuthorHref() },
+          post.ownerName
+        ),
+        " ",
+        getDateString(),
+        "."
       )
     );
   });
@@ -405,28 +517,130 @@ var renderPostList = function renderPostList() {
 
 // Renders the posts
 var renderPosts = function renderPosts() {
-  console.log('post list state:', this.state);
-
   // If there are no posts, then the dashboard is empty!
   if (this.state.posts.length === 0) {
     return renderEmptyPosts();
   }
 
-  return renderPostList();
+  // Fuck JavaScript's notion of "this"
+  return renderPostList.bind(this)();
+};
+
+// Retrieves posts
+var retrievePosts = function retrievePosts(self, url, callback) {
+  getCsrfToken(function (token) {
+    // Create the post data
+    var data = {
+      _csrf: token,
+      offset: self.state.offset || 0,
+      count: self.state.count || 10
+    };
+
+    // Send the request
+    sendRequest('POST', url, data, function (response) {
+      var posts = response.data.posts;
+      callback(posts);
+    });
+  });
+};
+
+// Creates a post list class
+var createPostListClass = function createPostListClass(conf) {
+  var defaultGetState = function defaultGetState() {
+    return { posts: [], offset: 0 };
+  };
+  var defaultGetPosts = function defaultGetPosts(self) {
+    return { posts: [] };
+  };
+  var config = conf;
+
+  if (typeof config.getPostsUrl !== 'string') {
+    throw new Error('Need a URL to retrieve posts from!');
+  }
+
+  // Edit the config
+  config.render = config.render || renderPosts;
+  config.getPosts = function (self, callback) {
+    var cb = callback.bind(self);
+    retrievePosts(self, config.getPostsUrl, cb);
+  };
+  config.getInitialState = function () {
+    var state = (config.getState || defaultGetState)();
+    state.posts = [];
+    state.offset = 0;
+    return state;
+  };
+
+  if (typeof config.hasPosts === 'undefined') {
+    config.hasPosts = true;
+  }
+
+  // Create the React class
+  return React.createClass({
+    // Renders this class
+    render: config.render,
+
+    // Gets more posts for this class to render
+    getPosts: function getPosts() {
+      var _this = this;
+
+      if (!config.hasPosts) {
+        return;
+      }
+
+      config.getPosts(this, function (newPosts) {
+        // Only do anything if there are new posts
+        if (newPosts.length > 0) {
+          var posts = _this.state.posts.concat(newPosts);
+          var offs = _this.state.offset = posts.length;
+
+          var newState = config.getInitialState();
+          newState.posts = posts;
+          newState.offset = offs;
+
+          _this.setState(newState);
+        }
+      });
+    },
+
+    // Gets this class's initial state
+    getInitialState: function getInitialState() {
+      return config.getInitialState();
+    }
+  });
 };
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+// Dismisses the info message
+var dismissInfo = function dismissInfo() {
+  $('#info-container').css({
+    display: 'none',
+    visibility: 'hidden'
+  });
+};
+
+// Handles an info message
+var displayInfo = function displayInfo(msg) {
+  if (msg) {
+    // Show the container
+    $('#info-container').css({
+      display: 'block',
+      visibility: 'visible'
+    });
+
+    // Set the info message
+    $('#info-message').text(msg);
+  }
+};
+
 // Dismisses the current error message
 var dismissError = function dismissError() {
-  var container = $('#error-container');
-  if (container) {
-    container.css({
-      display: 'none',
-      visibility: 'hidden'
-    });
-  }
+  $('#error-container').css({
+    display: 'none',
+    visibility: 'hidden'
+  });
 };
 
 // Handles an error message
@@ -435,19 +649,13 @@ var displayError = function displayError(msg) {
   console.log(message);
 
   // Show the container
-  var container = $('#error-container');
-  if (container) {
-    container.css({
-      display: 'block',
-      visibility: 'visible'
-    });
-  }
+  $('#error-container').css({
+    display: 'block',
+    visibility: 'visible'
+  });
 
   // Set the error message
-  var err = $('#error-message');
-  if (err) {
-    err.text(message);
-  }
+  $('#error-message').text(message);
 };
 
 // Defines a response
@@ -483,6 +691,9 @@ var sendRequest = function sendRequest(method, url, data, callback, userdata) {
 
       if (response.data.redirect) {
         window.location = response.data.redirect;
+      } else if (response.data.info) {
+        displayInfo(response.data.info);
+        callback(response);
       } else {
         callback(response);
       }
@@ -526,6 +737,11 @@ $(document).ready(function () {
   if (initialError) {
     displayError(initialError);
   }
+
+  // Handle the info alert button being clicked
+  $('button.info-close').click(function () {
+    dismissInfo();
+  });
 
   // Handle the error alert button being clicked
   $('button.error-close').click(function () {

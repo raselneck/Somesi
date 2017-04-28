@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 var PostFormClass = void 0;
 var PostListClass = void 0;
@@ -8,76 +8,103 @@ var listRenderer = void 0;
 // Renders the empty dashboard post list
 var renderEmptyPosts = function renderEmptyPosts() {
   return React.createElement(
-    'div',
-    { className: 'empty-posts' },
+    "div",
+    { className: "empty-posts" },
     React.createElement(
-      'h1',
+      "h1",
       null,
-      'Uh oh!'
+      "Uh oh!"
     ),
     React.createElement(
-      'p',
+      "p",
       null,
-      'Looks like there aren\'t any posts!'
+      "Looks like there aren't any posts!"
     ),
     React.createElement(
-      'p',
+      "p",
       null,
-      'Maybe you should try following some people to spice things up.'
+      "Maybe you should try following some people to spice things up."
+    ),
+    React.createElement(
+      "p",
+      null,
+      "If you already follow people, maybe think about following some more interesting people..."
     )
   );
 };
 
-// Retrieves a user's dashboard posts
-var retrievePosts = function retrievePosts(self, callback) {
-  getCsrfToken(function (token) {
-    console.log('retrieving posts');
+// Renders the create post form
+var renderPostForm = function renderPostForm() {
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(
+      "h4",
+      null,
+      "What's on your mind?"
+    ),
+    React.createElement(
+      "form",
+      { name: "post-form",
+        id: "post-form",
+        className: "post-form",
+        onSubmit: this.handleSubmit,
+        method: "POST",
+        action: "/post" },
+      React.createElement("textarea", { name: "text",
+        id: "post-text",
+        form: "post-form",
+        rows: "3",
+        maxLength: "260" }),
+      React.createElement("input", { type: "submit", className: "btn btn-primary", value: "Post" })
+    ),
+    React.createElement("div", { className: "clearfix" })
+  );
+};
 
-    // Create the data for the request
+// Handles making a post
+var handlePost = function handlePost(e) {
+  e.preventDefault();
+
+  // Get the text element and the text itself
+  var textElem = $('#post-text');
+  var text = textElem.val();
+
+  // Ensure the user said something
+  if (text.length === 0) {
+    return displayError('You need to say something, silly!');
+  } else if (text.length > 260) {
+    return displayError('Hey... Posts can only be 260 characters max!');
+  }
+
+  // We need to get a CSRF token to make the post
+  getCsrfToken(function (_csrf) {
+    // Create the post data
     var data = {
-      _csrf: token,
-      offset: self.state.offset,
-      count: self.state.count || 10
+      _csrf: _csrf,
+      text: text
     };
 
     // Send the request
-    sendRequest('POST', '/get-posts', data, function (response) {
-      var posts = response.data.posts;
-      callback(posts);
+    sendRequest('POST', '/post', data, function () {
+      textElem.val('');
     });
   });
 };
 
 // Handles when the page has loaded
 $(document).ready(function () {
-  // TODO - PostFormClass
+  // Define the post form class
+  PostFormClass = React.createClass({
+    displayName: "PostFormClass",
+
+    render: renderPostForm,
+    handleSubmit: handlePost
+  });
 
   // Defines the post list class
-  PostListClass = React.createClass({
-    displayName: 'PostListClass',
-
-    // Renders this class
-    render: renderPosts,
-
-    // Gets more posts
-    getPosts: function getPosts() {
-      var _this = this;
-
-      retrievePosts(this, function (posts) {
-        var currentPosts = _this.state.posts;
-        var currentOffs = _this.state.offset;
-
-        console.log('retrieved posts:', posts);
-      });
-    },
-
-    // Gets the initial state for this class
-    getInitialState: function getInitialState() {
-      return {
-        posts: [],
-        offset: 0
-      };
-    }
+  PostListClass = createPostListClass({
+    getPostsUrl: '/get-dashboard'
   });
 
   // Get the containers
@@ -85,6 +112,7 @@ $(document).ready(function () {
   var postListTarget = document.querySelector('#post-list-container');
 
   // Render the two classes
+  formRenderer = ReactDOM.render(React.createElement(PostFormClass, null), postFormTarget);
   listRenderer = ReactDOM.render(React.createElement(PostListClass, null), postListTarget);
 
   // Get the posts
@@ -186,10 +214,30 @@ var renderNavbarAccountInfo = function renderNavbarAccountInfo() {
   );
 };
 
+// Renders the navbar follow form
+var renderNavbarFollowForm = function renderNavbarFollowForm() {
+  var baseText = this.state.follows ? "Unfollow" : "Follow";
+  var text = baseText + ' ' + user;
+  return React.createElement(
+    'form',
+    { className: 'navbar-form',
+      name: 'follow-form',
+      id: 'follow-form',
+      onSubmit: this.handleSubmit,
+      method: 'POST',
+      action: '/follow' },
+    React.createElement(
+      'button',
+      { type: 'submit', className: 'btn btn-primary form-control' },
+      text
+    )
+  );
+};
+
 // Sets up the navbar sign-in form
 var initNavbar = function initNavbar(token) {
-  var target = document.querySelector('#navbar-data');
   var csrf = token;
+  var target = document.querySelector('#navbar-data');
 
   // If the target doesn't exist, then just stop what we're doing
   if (!target) {
@@ -232,6 +280,72 @@ var initNavbar = function initNavbar(token) {
     ReactDOM.render(React.createElement(NavbarAccount, null), target);
   };
 
+  // Initializes the navbar follow form
+  var initNavbarFollowForm = function initNavbarFollowForm(username) {
+    // If we're not on a profile page, then we don't need to do anything
+    if (typeof user === 'undefined' && typeof userExists === 'undefined') {
+      return;
+    }
+
+    // If the user is viewing their own profile, then we don't need to do anything
+    if (user === username) {
+      return;
+    }
+
+    // And now we enter callback hell...
+
+    getCsrfToken(function (token) {
+      var data = {
+        follower: username,
+        followee: user,
+        _csrf: token
+      };
+
+      // Check to see if the signed in user follows the viewing user
+      sendRequest('POST', '/follows', data, function (response) {
+        var follows = response.data.follows;
+
+        // Define the follow form
+        var NavbarFollowForm = React.createClass({
+          displayName: 'NavbarFollowForm',
+
+          // Renders the follow form
+          render: renderNavbarFollowForm,
+
+          // Gets the follow form's initial state
+          getInitialState: function getInitialState() {
+            return { follows: follows };
+          },
+
+          // Handles the follow form being submitted
+          handleSubmit: function handleSubmit(e) {
+            var _this = this;
+
+            e.preventDefault();
+
+            var action = this.state.follows ? '/unfollow' : '/follow';
+
+            // Send the follow or unfollow request
+            getCsrfToken(function (token2) {
+              var data2 = {
+                username: user,
+                _csrf: token2
+              };
+
+              sendRequest('POST', action, data2, function (response) {
+                follows = !follows;
+                _this.setState({ follows: follows });
+              });
+            });
+          }
+        });
+
+        // Render the follow form
+        ReactDOM.render(React.createElement(NavbarFollowForm, null), document.querySelector('#navbar-follow'));
+      });
+    });
+  };
+
   /////////////////////////////////////////////////////////////////////////////
 
   var accountInfo = $('#account-info');
@@ -240,6 +354,7 @@ var initNavbar = function initNavbar(token) {
 
   if (username && id) {
     initNavbarAccount(username, id);
+    initNavbarFollowForm(username);
   } else {
     initNavbarSignIn();
   }
@@ -250,14 +365,39 @@ var initNavbar = function initNavbar(token) {
 var renderPostList = function renderPostList() {
   // Define the post list
   var postList = this.state.posts.map(function (post) {
-    console.log(post);
+    // Gets the current post's date string
+    var getDateString = function getDateString() {
+      var date = new Date(post.date);
+      var ds = date.toLocaleDateString();
+      var ts = date.toLocaleTimeString();
+      return "on " + ds + " at " + ts;
+    };
+
+    // Gets the link to the author's profile
+    var getAuthorHref = function getAuthorHref() {
+      return "/profile/" + post.ownerName;
+    };
+
     return React.createElement(
       "div",
       { className: "post" },
       React.createElement(
-        "p",
+        "h4",
         null,
-        "That sure is a post!"
+        post.text
+      ),
+      React.createElement(
+        "p",
+        { className: "info" },
+        "by ",
+        React.createElement(
+          "a",
+          { href: getAuthorHref() },
+          post.ownerName
+        ),
+        " ",
+        getDateString(),
+        "."
       )
     );
   });
@@ -272,28 +412,130 @@ var renderPostList = function renderPostList() {
 
 // Renders the posts
 var renderPosts = function renderPosts() {
-  console.log('post list state:', this.state);
-
   // If there are no posts, then the dashboard is empty!
   if (this.state.posts.length === 0) {
     return renderEmptyPosts();
   }
 
-  return renderPostList();
+  // Fuck JavaScript's notion of "this"
+  return renderPostList.bind(this)();
+};
+
+// Retrieves posts
+var retrievePosts = function retrievePosts(self, url, callback) {
+  getCsrfToken(function (token) {
+    // Create the post data
+    var data = {
+      _csrf: token,
+      offset: self.state.offset || 0,
+      count: self.state.count || 10
+    };
+
+    // Send the request
+    sendRequest('POST', url, data, function (response) {
+      var posts = response.data.posts;
+      callback(posts);
+    });
+  });
+};
+
+// Creates a post list class
+var createPostListClass = function createPostListClass(conf) {
+  var defaultGetState = function defaultGetState() {
+    return { posts: [], offset: 0 };
+  };
+  var defaultGetPosts = function defaultGetPosts(self) {
+    return { posts: [] };
+  };
+  var config = conf;
+
+  if (typeof config.getPostsUrl !== 'string') {
+    throw new Error('Need a URL to retrieve posts from!');
+  }
+
+  // Edit the config
+  config.render = config.render || renderPosts;
+  config.getPosts = function (self, callback) {
+    var cb = callback.bind(self);
+    retrievePosts(self, config.getPostsUrl, cb);
+  };
+  config.getInitialState = function () {
+    var state = (config.getState || defaultGetState)();
+    state.posts = [];
+    state.offset = 0;
+    return state;
+  };
+
+  if (typeof config.hasPosts === 'undefined') {
+    config.hasPosts = true;
+  }
+
+  // Create the React class
+  return React.createClass({
+    // Renders this class
+    render: config.render,
+
+    // Gets more posts for this class to render
+    getPosts: function getPosts() {
+      var _this = this;
+
+      if (!config.hasPosts) {
+        return;
+      }
+
+      config.getPosts(this, function (newPosts) {
+        // Only do anything if there are new posts
+        if (newPosts.length > 0) {
+          var posts = _this.state.posts.concat(newPosts);
+          var offs = _this.state.offset = posts.length;
+
+          var newState = config.getInitialState();
+          newState.posts = posts;
+          newState.offset = offs;
+
+          _this.setState(newState);
+        }
+      });
+    },
+
+    // Gets this class's initial state
+    getInitialState: function getInitialState() {
+      return config.getInitialState();
+    }
+  });
 };
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+// Dismisses the info message
+var dismissInfo = function dismissInfo() {
+  $('#info-container').css({
+    display: 'none',
+    visibility: 'hidden'
+  });
+};
+
+// Handles an info message
+var displayInfo = function displayInfo(msg) {
+  if (msg) {
+    // Show the container
+    $('#info-container').css({
+      display: 'block',
+      visibility: 'visible'
+    });
+
+    // Set the info message
+    $('#info-message').text(msg);
+  }
+};
+
 // Dismisses the current error message
 var dismissError = function dismissError() {
-  var container = $('#error-container');
-  if (container) {
-    container.css({
-      display: 'none',
-      visibility: 'hidden'
-    });
-  }
+  $('#error-container').css({
+    display: 'none',
+    visibility: 'hidden'
+  });
 };
 
 // Handles an error message
@@ -302,19 +544,13 @@ var displayError = function displayError(msg) {
   console.log(message);
 
   // Show the container
-  var container = $('#error-container');
-  if (container) {
-    container.css({
-      display: 'block',
-      visibility: 'visible'
-    });
-  }
+  $('#error-container').css({
+    display: 'block',
+    visibility: 'visible'
+  });
 
   // Set the error message
-  var err = $('#error-message');
-  if (err) {
-    err.text(message);
-  }
+  $('#error-message').text(message);
 };
 
 // Defines a response
@@ -350,6 +586,9 @@ var sendRequest = function sendRequest(method, url, data, callback, userdata) {
 
       if (response.data.redirect) {
         window.location = response.data.redirect;
+      } else if (response.data.info) {
+        displayInfo(response.data.info);
+        callback(response);
       } else {
         callback(response);
       }
@@ -393,6 +632,11 @@ $(document).ready(function () {
   if (initialError) {
     displayError(initialError);
   }
+
+  // Handle the info alert button being clicked
+  $('button.info-close').click(function () {
+    dismissInfo();
+  });
 
   // Handle the error alert button being clicked
   $('button.error-close').click(function () {

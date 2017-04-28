@@ -29,6 +29,11 @@ const AccountSchema = new mongoose.Schema({
     match: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   },
 
+  following: {
+    type: [String],
+    default: () => ([]),
+  },
+
   salt: {
     type: Buffer,
     required: true,
@@ -90,27 +95,33 @@ AccountSchema.statics.generateHash = (password, callback) => {
 
 // Attempts to authenticate a user with the given username and password
 AccountSchema.statics.authenticate = (username, password, callback) =>
-  // NOTE - We can also authenticate by email
-   AccountModel.findByUsername(username, (err, doc) => {
-     if (err) {
-       console.log(`'AccountModel.findByUsername' returned an error for ${username}`);
-       return callback(err);
-     }
+  AccountModel.findByUsername(username, (err, doc) => {
+    if (err) {
+      return callback(err);
+    }
 
-     if (!doc) {
-       console.log(`'AccountModel.findByUsername' didn't find anything for ${username}`);
-       return callback();
-     }
+    if (!doc) {
+      return callback();
+    }
 
-     return validatePassword(doc, password, (result) => {
-       if (result === true) {
-         return callback(null, doc);
-       }
+    return validatePassword(doc, password, (result) => {
+      if (result === true) {
+        return callback(null, doc);
+      }
 
-       console.log(`Failed to validate password for ${username}`);
-       return callback();
-     });
-   });
+      console.log(`Failed to validate password for ${username}`);
+      return callback();
+    });
+  });
+
+// Checks to see if the given user exists
+AccountSchema.statics.exists = (username, callback) =>
+  AccountModel.findByUsername(username, (err, account) => {
+    if (err || !account) {
+      return callback(false);
+    }
+    return callback(true);
+  });
 
 // Gets all of the posts made by the user with the given username
 AccountSchema.statics.getPosts = (username, callback) =>
@@ -122,6 +133,57 @@ AccountSchema.statics.getPosts = (username, callback) =>
       return callback(new Error(`A user with the name ${username} does not exist!`));
     }
     return Post.getAllByUserName(username, callback);
+  });
+
+// Gets all of the users another user follows
+AccountSchema.statics.getFollowing = (username, callback) =>
+  AccountModel.findOne({ username }, (err, account) => {
+    if (err) {
+      return callback(err);
+    }
+    if (!account) {
+      return callback(new Error(`A user with the name ${username} does not exist!`));
+    }
+    return callback(err, account.following);
+  });
+
+// Adds a person to a user's following
+const addToFollowing = (user, nameToFollow, callback) => {
+  // Add the user's ID to the following list
+  user.following.push(nameToFollow);
+
+  // Save the user
+  user.save()
+    .then(() => callback())
+    .catch(err2 => callback(err2));
+};
+
+// Removes a person from a user's following
+const removeFromFollowing = (user, nameToUnfollow, callback) => {
+  // Remove the user's ID from the following list
+  const index = user.following.indexOf(nameToUnfollow);
+  if (index >= 0) {
+    user.following.splice(index, 1);
+  }
+
+  // Save the user
+  user.save()
+    .then(() => callback())
+    .catch(err2 => callback(err2));
+};
+
+// Attempts to follow or unfollow the given user
+AccountSchema.statics.followOrUnfollow = (follower, followee, follow, callback) =>
+  AccountModel.findByUsername(follower, (err2, account) => {
+    if (err2) {
+      return callback(err2);
+    }
+
+    // Now that we have the user account, we can actually follow or unfollow
+    if (follow) {
+      return addToFollowing(account, followee, callback);
+    }
+    return removeFromFollowing(account, followee, callback);
   });
 
 // Create the account model

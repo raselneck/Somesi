@@ -4,7 +4,8 @@ body {
 }
 
 /* Hides error containers by default */
-#error-container {
+#error-container,
+#info-container {
   display: none;
   visibility: hidden;
 }
@@ -19,6 +20,16 @@ body {
 /* Also used on the login and sign up pages */
 #form-container form + p {
   margin-top: 10px;
+}
+
+#post-form input[type="submit"] {
+  float: right;
+  width: 100px;
+}
+
+#post-text {
+  width: 100%;
+  resize: none;
 }
 
 /* Necessary because React messes with Bootstrap rendering for some reason */
@@ -48,4 +59,40 @@ input[type="hidden"] + button {
 .col-center {
   margin-left: auto;
   margin-right: auto;
+}
+
+.left {
+  float: left;
+}
+
+.right {
+  float: right;
+}
+
+.clearfix {
+  clear: both;
+}
+
+.post:first-of-type {
+  margin-top: 16px;
+}
+
+.post {
+  border: 1px solid #ddd;
+  background-color: #fafafa;
+  border-radius: 4px;
+  padding: 12px 20px;
+}
+
+.post p {
+  padding: 0;
+  margin: 0;
+}
+
+.post .info {
+  color: #888;
+}
+
+.post + .post {
+  margin-top: 16px;
 }

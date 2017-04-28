@@ -62,10 +62,26 @@ const renderNavbarAccountInfo = function() {
   );
 };
 
+// Renders the navbar follow form
+const renderNavbarFollowForm = function() {
+  const baseText = this.state.follows ? "Unfollow" : "Follow";
+  const text = `${baseText} ${user}`;
+  return (
+    <form className="navbar-form"
+          name="follow-form"
+          id="follow-form"
+          onSubmit={this.handleSubmit}
+          method="POST"
+          action="/follow">
+      <button type="submit" className="btn btn-primary form-control">{text}</button>
+    </form>
+  );
+};
+
 // Sets up the navbar sign-in form
 const initNavbar = (token) => {
-  const target = document.querySelector('#navbar-data');
   const csrf = token;
+  const target = document.querySelector('#navbar-data');
 
   // If the target doesn't exist, then just stop what we're doing
   if (!target) {
@@ -104,6 +120,66 @@ const initNavbar = (token) => {
     ReactDOM.render(<NavbarAccount/>, target);
   };
 
+  // Initializes the navbar follow form
+  const initNavbarFollowForm = (username) => {
+    // If we're not on a profile page, then we don't need to do anything
+    if (typeof user === 'undefined' && typeof userExists === 'undefined') {
+      return;
+    }
+
+    // If the user is viewing their own profile, then we don't need to do anything
+    if (user === username) {
+      return;
+    }
+
+    // And now we enter callback hell...
+
+    getCsrfToken((token) => {
+      const data = {
+        follower: username,
+        followee: user,
+        _csrf: token,
+      };
+
+      // Check to see if the signed in user follows the viewing user
+      sendRequest('POST', '/follows', data, (response) => {
+        let follows = response.data.follows;
+
+        // Define the follow form
+        const NavbarFollowForm = React.createClass({
+          // Renders the follow form
+          render: renderNavbarFollowForm,
+
+          // Gets the follow form's initial state
+          getInitialState: () => ({ follows }),
+
+          // Handles the follow form being submitted
+          handleSubmit: function(e) {
+            e.preventDefault();
+
+            const action = this.state.follows ? '/unfollow' : '/follow';
+
+            // Send the follow or unfollow request
+            getCsrfToken((token2) => {
+              const data2 = {
+                username: user,
+                _csrf: token2,
+              };
+
+              sendRequest('POST', action, data2, (response) => {
+                follows = !follows;
+                this.setState({ follows });
+              });
+            });
+          },
+        });
+
+        // Render the follow form
+        ReactDOM.render(<NavbarFollowForm />, document.querySelector('#navbar-follow'));
+      });
+    });
+  };
+
   /////////////////////////////////////////////////////////////////////////////
 
   const accountInfo = $('#account-info');
@@ -112,6 +188,7 @@ const initNavbar = (token) => {
 
   if (username && id) {
     initNavbarAccount(username, id);
+    initNavbarFollowForm(username);
   } else {
     initNavbarSignIn();
   }

@@ -1,6 +1,6 @@
 // Renders a page with common options
 const renderPage = (req, res, page, options) => {
-  const opt = options;
+  const opt = options || {};
   const account = req.session.account;
 
   if (account) {
@@ -10,7 +10,7 @@ const renderPage = (req, res, page, options) => {
     };
   }
 
-  res.render(page, opt);
+  return res.render(page, opt);
 };
 
 module.exports = {

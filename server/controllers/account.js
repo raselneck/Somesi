@@ -2,6 +2,7 @@ const models = require('../models');
 const shared = require('./shared.js');
 
 const Account = models.Account;
+const Post = models.Post;
 
 // Renders the log in page
 const renderLogInPage = (req, res) => {
@@ -16,35 +17,6 @@ const renderSignUpPage = (req, res) => {
   shared.renderPage(req, res, 'account-entry', {
     mode: 'sign-up',
     error: req.renderError,
-  });
-};
-
-// Renders a user's profile page
-const renderProfilePage = (req, res) => {
-  const pathParts = req.path.split('/');
-  pathParts.splice(0, 1);
-
-  if (pathParts.length === 0 || pathParts[0] === '') {
-    // "/profile" just redirects to "/"
-    return res.redirect('/');
-  } else if (pathParts.length > 1) {
-    // "/profile/{name}/..." redirects to "/profile/{name}"
-    return res.redirect(`/profile/${pathParts[0]}`);
-  }
-    // Okay, now we can try to render the profile page
-  const username = pathParts[0];
-  return Account.getPosts(username, (err, posts) => {
-    const options = {};
-
-    if (err) {
-      options.exists = false;
-    } else {
-      options.exists = true;
-      options.hasPosts = posts.length > 0;
-      options.posts = posts;
-    }
-
-    shared.renderPage(req, res, 'profile', options);
   });
 };
 
@@ -131,7 +103,7 @@ const signUp = (req_, res) => {
       req.session.account = Account.toSession(account);
       res.json({ redirect: '/dashboard' });
     }).catch((err) => {
-      console.log('Error saving account:', err);
+      console.log('error saving account:', err);
 
       let errorMessage = 'An error occurred.';
       if (err.code === 11000) {
@@ -151,17 +123,73 @@ const signUp = (req_, res) => {
 
 // Attempts to make a post for a user
 const post = (req, res) => {
-  res.status(501).json({});
+  const text = `${req.body.text}`;
+
+  // Ensure the text is valid
+  if (!text || text.length === 0) {
+    return res.status(400).json({ error: 'Invalid post text.' });
+  }
+
+  // Create the post data
+  const postData = {
+    owner: req.session.account._id,
+    ownerName: req.session.account.username,
+    text,
+  };
+
+  // Now save the post
+  return new Post(postData)
+    .save()
+    .then(() => res.status(201).json({ info: 'Nice! Refresh the page to see your new post.' }))
+    .catch((err) => {
+      // Uh-oh! An error occurred while saving the post
+      console.log('error saving post:', err);
+      return res.status(500).json({ error: 'An error occurred while saving your post.' });
+    });
+};
+
+// Provides functionality for following or unfollowing a user
+const followOrUnfollow = (req, res, follow) => {
+  const follower = req.session.account.username;
+  const followee = `${req.body.username}`;
+
+  return Account.followOrUnfollow(follower, followee, follow, (err) => {
+    if (err) {
+      const action = follow ? 'follow' : 'unfollow';
+      const message = `An error occurred trying to ${action} ${followee}`;
+      return res.status(500).json({ error: message });
+    }
+
+    let info;
+    if (follow) {
+      info = `Nice! You're now following ${followee}.`;
+    } else {
+      info = `Aww.. You're not longer following ${followee}...`;
+    }
+
+    return res.status(200).json({ info });
+  });
 };
 
 // Attempts to follow a user
-const follow = (req, res) => {
-  res.status(501).json({});
-};
+const follow = (req, res) => followOrUnfollow(req, res, true);
 
 // Attempts to un-follow a user
-const unfollow = (req, res) => {
-  res.status(501).json({});
+const unfollow = (req, res) => followOrUnfollow(req, res, false);
+
+// Checks to see if a given user follows another
+const follows = (req, res) => {
+  // Checks if "follower" follows "followee"
+  const follower = `${req.body.follower}`;
+  const followee = `${req.body.followee}`;
+
+  return Account.getFollowing(follower, (err, following) => {
+    if (err || !following) {
+      return res.status(500).json({ error: 'Failed to get your following list.' });
+    }
+
+    return res.json({ follows: following.indexOf(followee) >= 0 });
+  });
 };
 
 // Gets a CSRF token
@@ -173,13 +201,13 @@ const getToken = (req, res) => {
 module.exports = {
   renderLogInPage,
   renderSignUpPage,
-  renderProfilePage,
   renderSettingsPage,
   logIn,
   logOut,
   signUp,
   post,
   follow,
+  follows,
   unfollow,
   getToken,
 };
