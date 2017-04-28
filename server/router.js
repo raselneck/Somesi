@@ -15,6 +15,7 @@ router.all('/', mid.requiresNoAccount, splash.renderSplashPage);
 router.all('/logout', mid.requiresAccount, account.logOut);
 router.get('/signup', mid.requiresNoAccount, account.renderSignUpPage);
 router.get('/login', mid.requiresNoAccount, account.renderLogInPage);
+router.get('/change-password', account.renderChangePasswordPage);
 router.get('/get-csrf-token', account.getToken);
 
 router.use('/profile', profile.renderProfilePage);
@@ -23,6 +24,7 @@ router.get('/dashboard', mid.requiresAccount, dashboard.renderDashboard);
 
 router.post('/login', account.logIn);
 router.post('/signup', account.signUp);
+router.post('/change-password', mid.requiresAccountPost, account.changePassword);
 router.post('/post', mid.requiresAccountPost, account.post);
 router.post('/follow', mid.requiresAccountPost, account.follow);
 router.post('/follows', mid.requiresAccountPost, account.follows);

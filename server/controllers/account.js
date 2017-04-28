@@ -20,9 +20,11 @@ const renderSignUpPage = (req, res) => {
   });
 };
 
-// Renders the settings page
-const renderSettingsPage = (req, res) => {
-  res.status(501).json({ error: 'Sorry, not implemented :/' });
+// Renders the change password page
+const renderChangePasswordPage = (req, res) => {
+  shared.renderPage(req, res, 'change-password', {
+    error: req.renderError,
+  });
 };
 
 // Attempts to log a user in
@@ -121,6 +123,27 @@ const signUp = (req_, res) => {
   });
 };
 
+// Changes a user's password
+const changePassword = (req, res) => {
+  const username = `${req.session.account.username}`;
+  const oldPassword = `${req.body.oldPassword}`;
+  const newPassword = `${req.body.newPassword}`;
+  const newPassword2 = `${req.body.newPassword2}`;
+
+  if (newPassword !== newPassword2) {
+    return res.status(400).json({ error: 'Passwords do not match.' });
+  }
+
+  return Account.changePassword(username, oldPassword, newPassword, (err) => {
+    if (err) {
+      console.log('error changing password:', err);
+      return res.status(400).json({ error: 'Failed to change password.' });
+    }
+
+    return res.status(200).json({});
+  });
+};
+
 // Attempts to make a post for a user
 const post = (req, res) => {
   const text = `${req.body.text}`;
@@ -201,10 +224,11 @@ const getToken = (req, res) => {
 module.exports = {
   renderLogInPage,
   renderSignUpPage,
-  renderSettingsPage,
+  renderChangePasswordPage,
   logIn,
   logOut,
   signUp,
+  changePassword,
   post,
   follow,
   follows,

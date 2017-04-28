@@ -80,6 +80,15 @@ var renderNavbarAccountInfo = function renderNavbarAccountInfo() {
             'Profile'
           )
         ),
+        React.createElement(
+          'li',
+          null,
+          React.createElement(
+            'a',
+            { href: '/change-password' },
+            'Change Password'
+          )
+        ),
         React.createElement('li', { role: 'separator', className: 'divider' }),
         React.createElement(
           'li',

@@ -54,6 +54,7 @@ const renderNavbarAccountInfo = function() {
         </a>
         <ul className="dropdown-menu">
           <li><a href={this.getProfileHref()}>Profile</a></li>
+          <li><a href="/change-password">Change Password</a></li>
           <li role="separator" className="divider"></li>
           <li><a href="/logout">Log Out</a></li>
         </ul>

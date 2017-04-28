@@ -101,7 +101,7 @@ AccountSchema.statics.authenticate = (username, password, callback) =>
     }
 
     if (!doc) {
-      return callback();
+      return callback(new Error(`Failed to find account with username ${username}.`));
     }
 
     return validatePassword(doc, password, (result) => {
@@ -109,8 +109,36 @@ AccountSchema.statics.authenticate = (username, password, callback) =>
         return callback(null, doc);
       }
 
-      console.log(`Failed to validate password for ${username}`);
-      return callback();
+      const message = `Failed to validate password for ${username}`;
+      console.log(message);
+      return callback(new Error(message));
+    });
+  });
+
+// Attempts to change a user's password
+AccountSchema.statics.changePassword = (username, oldPassword, newPassword, callback) =>
+  AccountModel.authenticate(username, oldPassword, (err, account_) => {
+    const account = account_;
+
+    if (err) {
+      return callback(err);
+    }
+
+    if (!account) {
+      const message = `Failed to aithenticate ${username}.`;
+      return callback(new Error(message));
+    }
+
+    // Now we need to generate the new hash
+    return AccountModel.generateHash(newPassword, (salt, hash) => {
+      // Update the salt and the password
+      account.salt = salt;
+      account.password = hash;
+
+      // Now re-save the account
+      account.save()
+        .then(() => callback())
+        .catch(err2 => callback(err2));
     });
   });
 
