@@ -164,7 +164,7 @@ const followOrUnfollow = (req, res, follow) => {
     if (follow) {
       info = `Nice! You're now following ${followee}.`;
     } else {
-      info = `Aww.. You're not longer following ${followee}...`;
+      info = `Aww... You're not longer following ${followee}...`;
     }
 
     return res.status(200).json({ info });

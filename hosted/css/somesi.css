@@ -93,6 +93,7 @@ input[type="hidden"] + button {
   color: #888;
 }
 
-.post + .post {
+.post + .post,
+.post-footer {
   margin-top: 16px;
 }

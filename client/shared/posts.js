@@ -24,7 +24,19 @@ const renderPostList = function() {
   });
 
   // Return the rendered post list
-  return (<div className="postList">{postList}</div>);
+  return (
+    <div>
+      <div className="post-list">{postList}</div>
+      <div className="post-footer">
+        <form>
+          <input  type="submit"
+                  className="btn btn-primary btn-block"
+                  value="Load More Posts"
+                  onClick={this.getMorePosts}/>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 // Renders the posts
@@ -112,6 +124,12 @@ const createPostListClass = (conf) => {
     // Gets this class's initial state
     getInitialState: function() {
       return config.getInitialState();
+    },
+
+    // Handles getting more posts
+    getMorePosts: function(e) {
+      e.preventDefault();
+      this.getPosts();
     },
   });
 };

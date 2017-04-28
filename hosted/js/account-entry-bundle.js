@@ -510,8 +510,24 @@ var renderPostList = function renderPostList() {
   // Return the rendered post list
   return React.createElement(
     "div",
-    { className: "postList" },
-    postList
+    null,
+    React.createElement(
+      "div",
+      { className: "post-list" },
+      postList
+    ),
+    React.createElement(
+      "div",
+      { className: "post-footer" },
+      React.createElement(
+        "form",
+        null,
+        React.createElement("input", { type: "submit",
+          className: "btn btn-primary btn-block",
+          value: "Load More Posts",
+          onClick: this.getMorePosts })
+      )
+    )
   );
 };
 
@@ -606,6 +622,12 @@ var createPostListClass = function createPostListClass(conf) {
     // Gets this class's initial state
     getInitialState: function getInitialState() {
       return config.getInitialState();
+    },
+
+    // Handles getting more posts
+    getMorePosts: function getMorePosts(e) {
+      e.preventDefault();
+      this.getPosts();
     }
   });
 };
