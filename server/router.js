@@ -32,4 +32,7 @@ router.post('/unfollow', mid.requiresAccountPost, account.unfollow);
 router.post('/get-dashboard', mid.requiresAccountPost, dashboard.getPosts);
 router.post('/get-posts', profile.getPosts);
 
+// Handle 404 requests
+router.use((req, res) =>  res.redirect('/'));
+
 module.exports = router;
